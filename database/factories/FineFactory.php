@@ -15,6 +15,7 @@ class FineFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    protected $model = Fine::class;
     public function definition(): array
     {
         $status = fake()->randomElement(['pending', 'paid']);

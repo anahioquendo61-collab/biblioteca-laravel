@@ -78,7 +78,7 @@ class Book extends Model
     
     public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsToMany(Category::class);
+        return $this->belongsTo(Category::class);
     }
 
     //Relación Book → Loans

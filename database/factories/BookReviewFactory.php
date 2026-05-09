@@ -15,6 +15,7 @@ class BookReviewFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    protected $model = BookReview::class;
     public function definition(): array
     {
         return [

@@ -15,6 +15,7 @@ class MemberFactory extends Factory
      *
      * @return array<string, mixed>
      */
+     protected $model = Member::class; 
      public function definition(): array 
     { 
         $type = fake()->randomElement([ 

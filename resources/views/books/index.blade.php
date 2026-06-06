@@ -24,8 +24,17 @@
         <div class="mt-8">
             {{ $books->links() }}
         </div>
-    @endif
-    <a href="{{ route('books.trash') }}">
+    <a href="{{ route('books.trash') }}"
+        class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200">
+
+        {{-- Ícono --}}
+        <svg xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="currentColor">
+            <path d="M9 3V4H4V6H5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V6H20V4H15V3H9ZM7 6H17V19H7V6Z"/>
+        </svg>
+
         Papelera
     </a>
 @endsection

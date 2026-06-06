@@ -158,4 +158,18 @@ class BookController extends Controller
         session()->flash('success', 'Libro eliminado correctamente.'); 
         return redirect()->route('books.index');
     }
+
+    public function trash()
+    {
+        $books = Book::onlyTrashed()->get();
+        return view('books.trash', compact('books'));
+    }
+
+    public function restore(Book $book)
+    {
+        $book->restore();
+
+        return redirect()->route('books.index')
+            ->with('success', 'Libro restaurado correctamente');
+    }
 }

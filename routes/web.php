@@ -11,3 +11,8 @@ Route::redirect('/', '/books');
 Route::resource('books', BookController::class);
 Route::resource('authors', AuthorController::class);
 
+Route::get('/books-trash', [BookController::class, 'trash'])->name('books.trash');
+
+Route::post('/books/{book}/restore', [BookController::class, 'restore'])
+    ->withTrashed()
+    ->name('books.restore');

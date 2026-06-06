@@ -25,4 +25,7 @@
             {{ $books->links() }}
         </div>
     @endif
+    <a href="{{ route('books.trash') }}">
+        Papelera
+    </a>
 @endsection

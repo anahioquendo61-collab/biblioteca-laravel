@@ -112,4 +112,23 @@
  
         </div>
 </div>
+{{-- resources/views/books/show.blade.php — fragmento al final --}} 
+<div class="mt-6 flex items-center gap-3"> 
+    <a href="{{ route('books.edit', $book) }}" 
+       class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 
+              rounded-md hover:bg-indigo-700"> 
+        Editar 
+    </a> 
+  
+    <form method="POST" action="{{ route('books.destroy', $book) }}" 
+          onsubmit="return confirm('¿Está seguro de eliminar este libro?');"> 
+        @csrf 
+        @method('DELETE') 
+        <button type="submit" 
+            class="px-4 py-2 text-sm font-medium text-white bg-red-600 
+            rounded-md hover:bg-red-700"> 
+            Eliminar 
+        </button> 
+    </form> 
+</div> 
 @endsection

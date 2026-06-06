@@ -30,9 +30,57 @@ class AuthorController extends Controller
     }
  
     // Métodos placeholder — se implementan en guías posteriores
-    public function create() { /* Guía 7 */ }
-    public function store(Request $request) { /* Guía 7 */ }
-    public function edit(Author $author) { /* Guía 7 */ }
-    public function update(Request $request, Author $author) { /* Guía 7 */ }
-    public function destroy(Author $author) { /* Guía 7 */ }
+    public function create() 
+    {
+        return view('authors.create'); 
+    }
+    public function store(Request $request) 
+    { 
+        $validated = $request->validate([ 
+            'first_name'  => 'required|string|max:100', 
+            'last_name'   => 'required|string|max:100', 
+            'nationality' => 'nullable|string|max:80', 
+            'birth_date'  => 'nullable|date|before:today', 
+            'biography'   => 'nullable|string', 
+        ]); 
+  
+        $author = Author::create($validated); 
+  
+        session()->flash('success', 'Autor registrado correctamente.'); 
+        return redirect()->route('authors.show', $author);
+    }
+    public function edit(Author $author) 
+    { 
+        return view('authors.edit', compact('author')); 
+    }
+    public function update(Request $request, Author $author) 
+    {
+        $validated = $request->validate([ 
+            'first_name'  => 'required|string|max:100', 
+            'last_name'   => 'required|string|max:100', 
+            'nationality' => 'nullable|string|max:80', 
+            'birth_date'  => 'nullable|date|before:today', 
+            'biography'   => 'nullable|string', 
+        ]); 
+  
+        $author->update($validated); 
+  
+        session()->flash('success', 'Autor actualizado correctamente.'); 
+        return redirect()->route('authors.show', $author); 
+    }
+    public function destroy(Author $author) 
+    {
+        // Verificar integridad referencial: no eliminar si tiene libros 
+        if ($author->books()->count() > 0) { 
+            return back()->with( 
+                'error', 
+                'No se puede eliminar un autor con libros asociados.' 
+            ); 
+        } 
+  
+        $author->delete(); 
+  
+        session()->flash('success', 'Autor eliminado correctamente.'); 
+        return redirect()->route('authors.index'); 
+    }
 }

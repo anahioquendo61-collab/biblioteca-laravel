@@ -27,9 +27,13 @@ class BookController extends Controller
     public function create()
     {
         $categories = Category::orderBy('name')->get();
-        $authors    = Author::orderBy('last_name')->get();
 
-        return view('books.create', compact('categories', 'authors'));
+        $authors = Author::orderBy('last_name')->get();
+
+        return view(
+            'books.create',
+            compact('categories', 'authors')
+        );
     }
 
     /**
@@ -37,7 +41,34 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        // TODO: Validación + creación en Guía 7
+         // 1. Validación inline (la mejoraremos en la Guía 5 con Form Requests) 
+        $validated = $request->validate([ 
+            'title'        => 'required|string|max:255', 
+            'isbn'         => 'required|string|size:13|unique:books,isbn', 
+            'publisher'    => 'nullable|string|max:200', 
+            'publish_year' => 'nullable|integer|min:1000|max:' . date('Y'), 
+            'pages'        => 'nullable|integer|min:1', 
+            'language'     => 'nullable|string|max:30', 
+            'description'  => 'nullable|string', 
+            'cover_url'    => 'nullable|url|max:500', 
+            'total_copies' => 'required|integer|min:1', 
+            'category_id'  => 'required|exists:categories,id', 
+            'authors'      => 'required|array|min:1', 
+            'authors.*'    => 'integer|exists:authors,id', 
+        ]); 
+  
+        // 2. Al crear un libro nuevo, todas las copias están disponibles 
+        $validated['available_copies'] = $validated['total_copies']; 
+  
+        // 3. Crear el libro 
+        $book = Book::create($validated); 
+  
+        // 4. Asociar autores (relación N:M) usando s
+        $book->authors()->sync($request->input('authors', [])); 
+  
+        // 5. Mensaje flash y redirección 
+        session()->flash('success', 'Libro registrado exitosamente.'); 
+        return redirect()->route('books.show', $book);
     }
 
     /**
@@ -55,7 +86,10 @@ class BookController extends Controller
      */
     public function edit(Book $book)
     {
-        // TODO: Formulario de edición en Guía 7
+        $categories = Category::orderBy('name')->get(); 
+        $authors    = Author::orderBy('last_name')->get(); 
+  
+        return view('books.edit', compact('book', 'categories', 'authors'));
     }
 
     /**
@@ -63,7 +97,45 @@ class BookController extends Controller
      */
     public function update(Request $request, Book $book)
     {
-        // TODO: Validación + actualización en Guía 7
+        // 1. Validación inline
+        // Nota: Excluimos el 'isbn' de la validación porque se renderiza como readonly y no se envía.
+        $validated = $request->validate([
+            'title'        => 'required|string|max:255',
+            'publisher'    => 'nullable|string|max:200',
+            'publish_year' => 'nullable|integer|min:1000|max:' . date('Y'),
+            'pages'        => 'nullable|integer|min:1',
+            'language'     => 'nullable|string|max:30',
+            'description'  => 'nullable|string',
+            'cover_url'    => 'nullable|url|max:500',
+            'total_copies' => 'required|integer|min:1',
+            'category_id'  => 'required|exists:categories,id',
+            'authors'      => 'required|array|min:1',
+            'authors.*'    => 'integer|exists:authors,id',
+        ]);
+
+        // 2. Ajustar copias disponibles proporcionalmente al cambio de copias totales
+        $diferenciaCopias = $validated['total_copies'] - $book->total_copies;
+    
+        // Si intentan reducir copias por debajo de los libros actualmente prestados, lanzamos un error manual
+        $librosPrestados = $book->total_copies - $book->available_copies;
+            if ($validated['total_copies'] < $librosPrestados) {
+                return back()->withErrors([
+                'total_copies' => "No puedes reducir las copias totales a {$validated['total_copies']} porque actualmente hay {$librosPrestados} copias prestadas."
+            ])->withInput();
+        }
+
+        $validated['available_copies'] = $book->available_copies + $diferenciaCopias;
+
+        // 3. Actualizar los datos del libro en la base de datos
+        $book->update($validated);
+
+        // 4. Sincronizar autores con sync() - Reemplaza los registros antiguos en la tabla pivote author_book
+        $book->authors()->sync($request->input('authors', []));
+
+        // 5. Mensaje de éxito en sesión y redirección
+        session()->flash('success', 'El libro se ha actualizado correctamente.');
+    
+        return redirect()->route('books.show', $book);
     }
 
     /**
@@ -72,5 +144,18 @@ class BookController extends Controller
     public function destroy(Book $book)
     {
         // TODO: Borrado lógico en Guía 7
+        // 1. Verificar que no tenga préstamos activos 
+        if ($book->activeLoans()->count() > 0) { 
+            return back()->with( 
+                'error', 
+                'No se puede eliminar un libro con préstamos activos.' 
+            ); 
+        } 
+  
+        // 2. Soft delete: marca deleted_at, no borra físicamente 
+        $book->delete(); 
+  
+        session()->flash('success', 'Libro eliminado correctamente.'); 
+        return redirect()->route('books.index');
     }
 }
